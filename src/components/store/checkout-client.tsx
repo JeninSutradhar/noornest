@@ -25,14 +25,12 @@ type CartItem = {
 type CheckoutClientProps = {
   addresses: Address[];
   items: CartItem[];
-  userLoggedIn: boolean;
   userEmail?: string | null;
   userPhone?: string | null;
   userName?: string | null;
   razorpayKeyId: string;
 };
 
-// Razorpay Checkout is loaded via <Script> — declare the global
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,7 +41,6 @@ declare global {
 export function CheckoutClient({
   addresses,
   items,
-  userLoggedIn,
   userEmail,
   userPhone,
   userName,
@@ -52,7 +49,7 @@ export function CheckoutClient({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const canCheckout = !userLoggedIn || addresses.length > 0;
+  const canCheckout = addresses.length > 0;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,10 +64,8 @@ export function CheckoutClient({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        shippingAddressId: userLoggedIn ? formData.get("shippingAddressId") : undefined,
-        billingAddressId: userLoggedIn ? formData.get("billingAddressId") : undefined,
-        guestEmail: !userLoggedIn ? formData.get("guestEmail") : undefined,
-        guestPhone: !userLoggedIn ? formData.get("guestPhone") : undefined,
+        shippingAddressId: formData.get("shippingAddressId"),
+        billingAddressId: formData.get("billingAddressId"),
         paymentProvider,
         couponCode: formData.get("couponCode") || undefined,
         items,
@@ -86,8 +81,9 @@ export function CheckoutClient({
 
     const orderId: string = checkoutPayload.data.id;
 
-    // ── COD / Bank Transfer: no payment gateway needed ─────────────────────
+    // ── COD: no payment gateway needed ────────────────────────────────────
     if (paymentProvider !== "RAZORPAY") {
+      await fetch("/api/store/cart", { method: "DELETE" });
       router.push(`/checkout/success?orderId=${orderId}`);
       return;
     }
@@ -113,16 +109,6 @@ export function CheckoutClient({
     };
 
     // ── Step 3: Open Razorpay Checkout popup ───────────────────────────────
-    const prefillName = userLoggedIn
-      ? (userName ?? "")
-      : String(formData.get("guestName") ?? "");
-    const prefillEmail = userLoggedIn
-      ? (userEmail ?? "")
-      : String(formData.get("guestEmail") ?? "");
-    const prefillContact = userLoggedIn
-      ? (userPhone ?? "")
-      : String(formData.get("guestPhone") ?? "");
-
     const rzp = new window.Razorpay({
       key: razorpayKeyId,
       amount,
@@ -132,9 +118,9 @@ export function CheckoutClient({
       image: "/noornest_logo.png",
       order_id: razorpayOrderId,
       prefill: {
-        name: prefillName,
-        email: prefillEmail,
-        contact: prefillContact,
+        name: userName ?? "",
+        email: userEmail ?? "",
+        contact: userPhone ?? "",
       },
       theme: { color: "#0A4D3C" },
       modal: {
@@ -170,7 +156,7 @@ export function CheckoutClient({
           return;
         }
 
-        // ── Step 5: Clear cart and redirect to success ──────────────────────
+        // ── Step 5: Clear cart and redirect ────────────────────────────────
         await fetch("/api/store/cart", { method: "DELETE" });
         router.push(`/checkout/success?orderId=${orderId}`);
       },
@@ -181,11 +167,7 @@ export function CheckoutClient({
 
   return (
     <>
-      {/* Load Razorpay Checkout script once */}
-      <Script
-        src="https://checkout.razorpay.com/v1/checkout.js"
-        strategy="lazyOnload"
-      />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
       <form
         onSubmit={onSubmit}
@@ -194,16 +176,15 @@ export function CheckoutClient({
         <h1 className="text-2xl font-semibold text-[#0A4D3C]">Checkout</h1>
 
         {/* ── Address section ─────────────────────────────────────────────── */}
-        {userLoggedIn ? (
+        {addresses.length === 0 ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+            You need a delivery address to place an order.{" "}
+            <Link href="/account/addresses?next=/checkout" className="font-medium underline">
+              Add address →
+            </Link>
+          </div>
+        ) : (
           <>
-            {addresses.length === 0 && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
-                Please add an address before placing an order.{" "}
-                <Link href="/account/addresses" className="font-medium underline">
-                  Add address
-                </Link>
-              </div>
-            )}
             <div>
               <label className="mb-1 block text-sm font-medium text-[#0A4D3C]">
                 Shipping Address
@@ -212,7 +193,6 @@ export function CheckoutClient({
                 name="shippingAddressId"
                 required
                 className="h-10 w-full rounded-md border border-[#0A4D3C]/20 px-3 text-sm"
-                disabled={addresses.length === 0}
               >
                 {addresses.map((address) => (
                   <option key={address.id} value={address.id}>
@@ -229,7 +209,6 @@ export function CheckoutClient({
                 name="billingAddressId"
                 required
                 className="h-10 w-full rounded-md border border-[#0A4D3C]/20 px-3 text-sm"
-                disabled={addresses.length === 0}
               >
                 {addresses.map((address) => (
                   <option key={address.id} value={address.id}>
@@ -239,46 +218,6 @@ export function CheckoutClient({
               </select>
             </div>
           </>
-        ) : (
-          <div className="space-y-3 rounded-lg border border-[#0A4D3C]/10 bg-[#0A4D3C]/[0.03] p-3">
-            <p className="text-sm text-slate-600">
-              Guest checkout.{" "}
-              <Link href="/login?next=/checkout" className="font-medium text-[#0A4D3C]">
-                Login
-              </Link>{" "}
-              for faster checkout and order history.
-            </p>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[#0A4D3C]">Full Name</label>
-              <input
-                type="text"
-                name="guestName"
-                className="h-10 w-full rounded-md border border-[#0A4D3C]/20 px-3 text-sm"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[#0A4D3C]">Email</label>
-              <input
-                type="email"
-                name="guestEmail"
-                required
-                className="h-10 w-full rounded-md border border-[#0A4D3C]/20 px-3 text-sm"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-[#0A4D3C]">
-                Phone (optional)
-              </label>
-              <input
-                type="text"
-                name="guestPhone"
-                className="h-10 w-full rounded-md border border-[#0A4D3C]/20 px-3 text-sm"
-                placeholder="+91 98XXXXXXXX"
-              />
-            </div>
-          </div>
         )}
 
         {/* ── Payment method ───────────────────────────────────────────────── */}

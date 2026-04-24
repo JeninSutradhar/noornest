@@ -8,8 +8,13 @@ import { Input } from "@/components/ui/input";
 import { requireUserOrRedirect } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export default async function AccountAddressesPage() {
+export default async function AccountAddressesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   const user = await requireUserOrRedirect("/account/addresses");
+  const { next } = await searchParams;
   const addresses = await prisma.address.findMany({
     where: { userId: user.id },
     orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
@@ -17,11 +22,20 @@ export default async function AccountAddressesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-[#0A4D3C]">My Addresses</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-[#0A4D3C]">My Addresses</h1>
+        {next && (
+          <p className="text-sm text-slate-500">
+            Add an address to continue with your order
+          </p>
+        )}
+      </div>
 
       <section className="lux-card rounded-xl p-5">
         <h2 className="text-lg font-semibold text-[#0A4D3C]">Add New Address</h2>
         <form action={createAddressAction} className="mt-4 grid gap-3 md:grid-cols-2">
+          {/* Pass next param so action redirects back after saving */}
+          {next && <input type="hidden" name="next" value={next} />}
           <Input name="fullName" placeholder="Full name" required />
           <Input name="phone" placeholder="Phone" required />
           <Input name="email" type="email" placeholder="Email (optional)" />
@@ -46,11 +60,13 @@ export default async function AccountAddressesPage() {
           <Input name="state" placeholder="State" required />
           <Input name="country" defaultValue="India" placeholder="Country" />
           <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" name="isDefault" />
+            <input type="checkbox" name="isDefault" defaultChecked={addresses.length === 0} />
             Set as default address
           </label>
           <div className="md:col-span-2">
-            <Button type="submit">Add Address</Button>
+            <Button type="submit">
+              {next ? "Save & Continue to Checkout" : "Add Address"}
+            </Button>
           </div>
         </form>
       </section>

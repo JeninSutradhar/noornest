@@ -3,11 +3,12 @@ import Link from "next/link";
 
 import { updateCartQuantityAction } from "@/app/actions/cart";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/auth";
 import { getCartItems } from "@/lib/cart";
 import { prisma } from "@/lib/prisma";
 
 export default async function CartPage() {
-  const cartItems = await getCartItems();
+  const [user, cartItems] = await Promise.all([getCurrentUser(), getCartItems()]);
   const products = await prisma.product.findMany({
     where: { id: { in: cartItems.map((item) => item.productId) } },
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 }, variants: true },
@@ -100,7 +101,11 @@ export default async function CartPage() {
           </div>
         </div>
         <Button asChild className="mt-4 w-full" disabled={detailed.length === 0}>
-          <Link href="/checkout">Proceed to Checkout</Link>
+          {user ? (
+            <Link href="/checkout">Proceed to Checkout</Link>
+          ) : (
+            <Link href="/login?next=/checkout">Login to Checkout</Link>
+          )}
         </Button>
       </aside>
     </div>

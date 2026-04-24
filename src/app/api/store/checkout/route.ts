@@ -52,17 +52,20 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
     const sessionUser = await getCurrentUser();
     const effectiveUserId = sessionUser?.id ?? null;
-    if (!effectiveUserId && !body.guestEmail) {
-      throw new ApiError(400, "guestEmail is required for guest checkout");
+
+    // Require authentication — guest checkout is disabled
+    if (!effectiveUserId) {
+      throw new ApiError(401, "Please log in to place an order");
     }
-    if (effectiveUserId && body.shippingAddressId) {
+
+    if (body.shippingAddressId) {
       const shippingAddress = await prisma.address.findFirst({
         where: { id: body.shippingAddressId, userId: effectiveUserId },
         select: { id: true },
       });
       if (!shippingAddress) throw new ApiError(403, "Invalid shipping address");
     }
-    if (effectiveUserId && body.billingAddressId) {
+    if (body.billingAddressId) {
       const billingAddress = await prisma.address.findFirst({
         where: { id: body.billingAddressId, userId: effectiveUserId },
         select: { id: true },

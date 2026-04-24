@@ -1,27 +1,23 @@
 import Link from "next/link";
 
-import { getCurrentUser } from "@/lib/auth";
+import { requireUserOrRedirect } from "@/lib/auth";
 import { getCartItems } from "@/lib/cart";
+import { getTaxConfig } from "@/lib/commerce";
 import { prisma } from "@/lib/prisma";
 import { CheckoutClient } from "@/components/store/checkout-client";
 
 export default async function CheckoutPage() {
-  const [user, cartItems] = await Promise.all([getCurrentUser(), getCartItems()]);
+  const user = await requireUserOrRedirect("/checkout");
+  const cartItems = await getCartItems();
 
-  const addresses = user
-    ? await prisma.address.findMany({
-        where: { userId: user.id },
-        orderBy: { isDefault: "desc" },
-        select: {
-          id: true,
-          fullName: true,
-          line1: true,
-          city: true,
-          phone: true,
-          email: true,
-        },
-      })
-    : [];
+  const [addresses, taxConfig] = await Promise.all([
+    prisma.address.findMany({
+      where: { userId: user.id },
+      orderBy: { isDefault: "desc" },
+      select: { id: true, fullName: true, line1: true, city: true, phone: true, email: true },
+    }),
+    getTaxConfig(),
+  ]);
 
   const products = await prisma.product.findMany({
     where: {
@@ -32,18 +28,21 @@ export default async function CheckoutPage() {
     select: { id: true, salePrice: true, regularPrice: true },
   });
 
-  // Filter cart to only items with valid, active products
   const validCartItems = cartItems.filter((item) =>
     products.some((p) => p.id === item.productId),
   );
 
+  // Mirror the exact same calculation as the checkout API
   const subtotal = validCartItems.reduce((sum, item) => {
     const p = products.find((product) => product.id === item.productId);
     if (!p) return sum;
     return sum + Number(p.salePrice ?? p.regularPrice) * item.quantity;
   }, 0);
   const shipping = subtotal >= 1499 ? 0 : 99;
-  const total = subtotal + shipping;
+  const taxAmount = taxConfig.enabled
+    ? Number(((subtotal * taxConfig.rate) / 100).toFixed(2))
+    : 0;
+  const total = subtotal + shipping + taxAmount;
 
   if (validCartItems.length === 0) {
     return (
@@ -59,31 +58,21 @@ export default async function CheckoutPage() {
   return (
     <div className="grid gap-6 md:grid-cols-[1fr_360px]">
       <div className="space-y-4">
-        {!user && (
-          <div className="rounded-xl border border-[#0A4D3C]/10 bg-white p-4 text-sm text-slate-600">
-            Already have an account?{" "}
-            <Link href="/login?next=/checkout" className="font-medium text-[#0A4D3C]">
-              Login for faster checkout
-            </Link>
-            .
-          </div>
-        )}
-        {user && addresses.length === 0 && (
+        {addresses.length === 0 && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-            No saved address found. Add one in{" "}
-            <Link href="/account/addresses" className="font-medium underline">
-              My Addresses
+            No saved address found. Please{" "}
+            <Link href="/account/addresses?next=/checkout" className="font-medium underline">
+              add a delivery address
             </Link>{" "}
-            or checkout as guest.
+            to continue.
           </div>
         )}
         <CheckoutClient
           addresses={addresses}
           items={validCartItems}
-          userLoggedIn={Boolean(user)}
-          userEmail={user?.email}
-          userPhone={user?.phone}
-          userName={user?.name}
+          userEmail={user.email}
+          userPhone={user.phone}
+          userName={user.name}
           razorpayKeyId={process.env.RAZORPAY_KEY_ID ?? ""}
         />
       </div>
@@ -99,6 +88,12 @@ export default async function CheckoutPage() {
             <span className="text-slate-600">Shipping</span>
             <span>{shipping === 0 ? "Free" : `Rs. ${shipping.toFixed(2)}`}</span>
           </div>
+          {taxConfig.enabled && taxAmount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-slate-600">GST ({taxConfig.rate}%)</span>
+              <span>Rs. {taxAmount.toFixed(2)}</span>
+            </div>
+          )}
           {shipping > 0 && (
             <p className="text-xs text-slate-400">
               Free shipping on orders above Rs. 1,499

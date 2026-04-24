@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireUserOrRedirect } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -51,6 +52,12 @@ export async function createAddressAction(formData: FormData) {
 
   revalidatePath("/account/addresses");
   revalidatePath("/checkout");
+
+  // Redirect back to wherever the user came from (e.g. /checkout)
+  const next = String(formData.get("next") || "").trim();
+  if (next && next.startsWith("/")) {
+    redirect(next);
+  }
 }
 
 export async function deleteAddressAction(formData: FormData) {
