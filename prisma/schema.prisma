@@ -1,0 +1,507 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum AddressType {
+  HOME
+  OFFICE
+  OTHER
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  INACTIVE
+}
+
+enum VariantType {
+  SIZE
+  COLOR
+  DESIGN
+  MATERIAL
+  STYLE
+  CUSTOM
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  COD
+  BANK_TRANSFER
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum DiscountScope {
+  ALL
+  PRODUCTS
+  CATEGORIES
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SectionType {
+  NEW_ARRIVALS
+  CUSTOM
+}
+
+enum ShipmentStatus {
+  PENDING
+  CREATED
+  PICKUP_SCHEDULED
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+  CANCELLED
+}
+
+enum SettingValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  SECRET
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  role               UserRole          @default(CUSTOMER)
+  name               String
+  email              String            @unique
+  phone              String?           @unique
+  passwordHash       String?
+  isActive           Boolean           @default(true)
+  emailVerifiedAt    DateTime?
+  phoneVerifiedAt    DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+  addresses          Address[]
+  orders             Order[]
+  reviews            Review[]
+}
+
+model Address {
+  id              String      @id @default(cuid())
+  userId          String
+  type            AddressType @default(HOME)
+  fullName        String
+  phone           String
+  email           String?
+  line1           String
+  line2           String?
+  landmark        String?
+  city            String
+  state           String
+  country         String      @default("India")
+  postalCode      String
+  isDefault       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders  Order[]     @relation("ShippingAddress")
+  billingOrders   Order[]     @relation("BillingAddress")
+
+  @@index([userId, isDefault])
+}
+
+model Category {
+  id                      String             @id @default(cuid())
+  name                    String
+  slug                    String             @unique
+  description             String?            @db.Text
+  imageUrl                String?
+  sortOrder               Int                @default(0)
+  featured                Boolean            @default(false)
+  isActive                Boolean            @default(true)
+  parentId                String?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  parent                  Category?          @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children                Category[]         @relation("CategoryTree")
+  productCategories       ProductCategory[]
+  couponCategoryRules     CouponCategoryRule[]
+
+  @@index([parentId])
+  @@index([sortOrder, featured, isActive])
+}
+
+model Product {
+  id                          String                  @id @default(cuid())
+  title                       String
+  slug                        String                  @unique
+  description                 String                  @db.LongText
+  shortDescription            String?                 @db.Text
+  regularPrice                Decimal                 @db.Decimal(10, 2)
+  salePrice                   Decimal?                @db.Decimal(10, 2)
+  sku                         String                  @unique
+  stockQuantity               Int                     @default(0)
+  weightKg                    Decimal                 @default(0) @db.Decimal(10, 3)
+  dimensionLengthCm           Decimal                 @default(0) @db.Decimal(10, 2)
+  dimensionWidthCm            Decimal                 @default(0) @db.Decimal(10, 2)
+  dimensionHeightCm           Decimal                 @default(0) @db.Decimal(10, 2)
+  variantType                 VariantType?
+  attributesJson              Json?
+  tagsJson                    Json?
+  featured                    Boolean                 @default(false)
+  status                      ProductStatus           @default(DRAFT)
+  metaTitle                   String?
+  metaDescription             String?                 @db.Text
+  islamicComplianceNote       String?                 @db.Text
+  avgRating                   Decimal                 @default(0) @db.Decimal(3, 2)
+  totalRatings                Int                     @default(0)
+  publishedAt                 DateTime?
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
+  deletedAt                   DateTime?
+  images                      ProductImage[]
+  categories                  ProductCategory[]
+  variants                    ProductVariant[]
+  orderItems                  OrderItem[]
+  reviews                     Review[]
+  homepageSectionProducts     HomepageSectionProduct[]
+  couponProductRules          CouponProductRule[]
+
+  @@index([title])
+  @@index([status, featured, createdAt])
+  @@index([stockQuantity])
+}
+
+model ProductImage {
+  id          String   @id @default(cuid())
+  productId   String
+  imageUrl    String
+  altText     String?
+  sortOrder   Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+}
+
+model ProductVariant {
+  id             String      @id @default(cuid())
+  productId      String
+  name           String
+  sku            String      @unique
+  value          String
+  option1        String?
+  option2        String?
+  option3        String?
+  regularPrice   Decimal     @db.Decimal(10, 2)
+  salePrice      Decimal?    @db.Decimal(10, 2)
+  stockQuantity  Int         @default(0)
+  weightKg       Decimal?    @db.Decimal(10, 3)
+  imageUrl       String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  product        Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+
+  @@index([productId, isActive])
+}
+
+model ProductCategory {
+  productId    String
+  categoryId   String
+  createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId, productId])
+}
+
+model Order {
+  id                      String            @id @default(cuid())
+  orderNumber             String            @unique
+  userId                  String?
+  guestEmail              String?
+  guestPhone              String?
+  notes                   String?           @db.Text
+  paymentProvider         PaymentProvider   @default(RAZORPAY)
+  paymentStatus           PaymentStatus     @default(PENDING)
+  orderStatus             OrderStatus       @default(PENDING)
+  subtotalAmount          Decimal           @db.Decimal(10, 2)
+  shippingChargeAmount    Decimal           @default(0) @db.Decimal(10, 2)
+  taxAmount               Decimal           @default(0) @db.Decimal(10, 2)
+  couponDiscountAmount    Decimal           @default(0) @db.Decimal(10, 2)
+  totalAmount             Decimal           @db.Decimal(10, 2)
+  razorpayPaymentId       String?
+  shippingAddressId       String?
+  billingAddressId        String?
+  shippingAddressSnapshot Json?
+  billingAddressSnapshot  Json?
+  confirmedAt             DateTime?
+  shippedAt               DateTime?
+  deliveredAt             DateTime?
+  cancelledAt             DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  user                    User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  shippingAddress         Address?          @relation("ShippingAddress", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  billingAddress          Address?          @relation("BillingAddress", fields: [billingAddressId], references: [id], onDelete: SetNull)
+  items                   OrderItem[]
+  couponUsages            CouponUsage[]
+  payment                 Payment?
+  shipment                Shipment?
+  invoice                 Invoice?
+
+  @@index([userId])
+  @@index([paymentStatus, orderStatus, createdAt])
+  @@index([shippingAddressId])
+  @@index([billingAddressId])
+}
+
+model OrderItem {
+  id              String          @id @default(cuid())
+  orderId         String
+  productId       String
+  variantId       String?
+  productTitle    String
+  productSlug     String
+  productSku      String
+  variantLabel    String?
+  quantity        Int
+  unitPrice       Decimal         @db.Decimal(10, 2)
+  totalPrice      Decimal         @db.Decimal(10, 2)
+  taxRatePercent  Decimal?        @db.Decimal(5, 2)
+  taxAmount       Decimal?        @db.Decimal(10, 2)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant         ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Coupon {
+  id                    String               @id @default(cuid())
+  code                  String               @unique
+  type                  CouponType
+  value                 Decimal              @db.Decimal(10, 2)
+  minimumCartValue      Decimal?             @db.Decimal(10, 2)
+  maxDiscountAmount     Decimal?             @db.Decimal(10, 2)
+  startDate             DateTime
+  expiryDate            DateTime
+  usageLimitPerUser     Int?
+  usageLimitTotal       Int?
+  usedCount             Int                  @default(0)
+  scope                 DiscountScope        @default(ALL)
+  status                Boolean              @default(true)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  usages                CouponUsage[]
+  productRules          CouponProductRule[]
+  categoryRules         CouponCategoryRule[]
+
+  @@index([status, startDate, expiryDate])
+}
+
+model CouponUsage {
+  id          String   @id @default(cuid())
+  couponId    String
+  orderId     String
+  userId      String?
+  discountAmount Decimal @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  coupon      Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([couponId, userId])
+  @@unique([couponId, orderId])
+}
+
+model CouponProductRule {
+  couponId     String
+  productId    String
+  coupon       Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([couponId, productId])
+}
+
+model CouponCategoryRule {
+  couponId     String
+  categoryId   String
+  coupon       Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([couponId, categoryId])
+}
+
+model Review {
+  id             String        @id @default(cuid())
+  productId      String
+  userId         String?
+  orderId        String?
+  rating         Int
+  title          String?
+  comment        String?       @db.Text
+  status         ReviewStatus  @default(PENDING)
+  isVerified     Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  product        Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId, status, createdAt])
+  @@index([userId])
+}
+
+model Shipment {
+  id                           String         @id @default(cuid())
+  orderId                      String         @unique
+  shiprocketOrderId            String?        @unique
+  shiprocketShipmentId         String?        @unique
+  awbCode                      String?
+  courierName                  String?
+  courierCode                  String?
+  trackingUrl                  String?
+  trackingNumber               String?
+  pickupRequested              Boolean        @default(false)
+  pickupToken                  String?
+  shippingMethod               String?
+  shippingRateAmount           Decimal?       @db.Decimal(10, 2)
+  status                       ShipmentStatus @default(PENDING)
+  failureReason                String?        @db.Text
+  lastSyncedAt                 DateTime?
+  createdAt                    DateTime       @default(now())
+  updatedAt                    DateTime       @updatedAt
+  order                        Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+model Payment {
+  id                    String         @id @default(cuid())
+  orderId               String         @unique
+  provider              PaymentProvider @default(RAZORPAY)
+  razorpayOrderId       String?        @unique
+  razorpayPaymentId     String?        @unique
+  razorpaySignature     String?
+  amount                Decimal        @db.Decimal(10, 2)
+  currency              String         @default("INR")
+  status                PaymentStatus  @default(PENDING)
+  gatewayPayloadJson    Json?
+  paidAt                DateTime?
+  failedAt              DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  order                 Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id                 String   @id @default(cuid())
+  orderId            String   @unique
+  invoiceNumber      String   @unique
+  invoiceUrl         String?
+  generatedAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  order              Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model HeroSlide {
+  id               String   @id @default(cuid())
+  title            String
+  subtitle         String?
+  buttonText       String?
+  buttonLink       String?
+  desktopImageUrl  String
+  sortOrder        Int      @default(0)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model HomepageSection {
+  id                String                  @id @default(cuid())
+  type              SectionType
+  title             String
+  subtitle          String?
+  slug              String                  @unique
+  productsToShow    Int                     @default(4)
+  isDefault         Boolean                 @default(false)
+  sortOrder         Int                     @default(0)
+  isActive          Boolean                 @default(true)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  products          HomepageSectionProduct[]
+
+  @@index([type, isActive, sortOrder])
+}
+
+model HomepageSectionProduct {
+  sectionId        String
+  productId        String
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  section          HomepageSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  product          Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([sectionId, productId])
+  @@index([productId])
+}
+
+model AdminSetting {
+  id            String           @id @default(cuid())
+  groupKey      String
+  key           String
+  valueType     SettingValueType @default(STRING)
+  valueJson     Json?
+  isEncrypted   Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([groupKey, key])
+  @@index([groupKey])
+}
