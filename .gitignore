@@ -43,4 +43,3 @@ next-env.d.ts
 /src/generated/prisma
 
 # Local admin uploads (product images, etc.)
-/public/uploads
