@@ -30,7 +30,7 @@ export function ProductGallery({
   return (
     <div className="flex flex-col gap-4 md:flex-row-reverse">
       {/* Main image */}
-      <div className="relative flex-1 aspect-[1/1.1] min-h-[380px] overflow-hidden rounded-2xl border border-[#0A4D3C]/10 bg-[#F8F5EE] shadow-sm">
+      <div className="relative flex-1 aspect-square overflow-hidden rounded-xl border border-[#0A4D3C]/10 bg-[#F8F5EE] shadow-sm md:aspect-[1/1.1] md:min-h-[380px] md:rounded-2xl">
         {active && (
           <Image
             src={active.imageUrl}

@@ -103,32 +103,32 @@ export default async function ProductDetailPage({
     <div className="min-h-screen">
       {/* ─── Breadcrumb ─── */}
       <div className="border-b border-[#0A4D3C]/8 bg-white/60">
-        <nav className="mx-auto flex max-w-[1400px] items-center gap-1.5 px-4 py-3 text-sm text-slate-500 md:px-8">
-          <Link href="/" className="flex items-center gap-1 hover:text-[#0A4D3C]">
-            <Home className="h-3.5 w-3.5" />
-            Home
+        <nav className="mx-auto flex max-w-[1400px] items-center gap-1 overflow-x-auto px-3 py-2.5 text-xs text-slate-500 md:gap-1.5 md:px-8 md:py-3 md:text-sm">
+          <Link href="/" className="flex shrink-0 items-center gap-1 hover:text-[#0A4D3C]">
+            <Home className="h-3 w-3 md:h-3.5 md:w-3.5" />
+            <span className="hidden sm:inline">Home</span>
           </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+          <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" />
           {breadcrumbCategory && (
             <>
               <Link
                 href={`/category/${breadcrumbCategory.slug}`}
-                className="hover:text-[#0A4D3C]"
+                className="shrink-0 hover:text-[#0A4D3C]"
               >
                 {breadcrumbCategory.name}
               </Link>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+              <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" />
             </>
           )}
-          <span className="line-clamp-1 max-w-[220px] font-medium text-slate-700">
+          <span className="line-clamp-1 font-medium text-slate-700">
             {product.title}
           </span>
         </nav>
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-8">
+      <div className="mx-auto max-w-[1400px] px-3 py-4 md:px-8 md:py-8">
         {/* ─── Hero: Gallery + Buy Panel ─── */}
-        <div className="grid items-start gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="grid items-start gap-4 md:gap-8 lg:grid-cols-[1.15fr_0.85fr]">
           {/* Gallery */}
           <ProductGallery
             images={product.images.map((img) => ({
@@ -141,16 +141,16 @@ export default async function ProductDetailPage({
           />
 
           {/* Buy Panel */}
-          <div className="space-y-4 lg:sticky lg:top-24">
+          <div className="space-y-3 md:space-y-4 lg:sticky lg:top-24">
             {/* Main buy card */}
-            <div className="lux-card rounded-2xl p-6 md:p-7">
+            <div className="lux-card rounded-xl p-4 md:rounded-2xl md:p-6 lg:p-7">
               {/* Category chips */}
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-3 flex flex-wrap gap-1.5 md:mb-4 md:gap-2">
                 {product.categories.slice(0, 3).map((entry) => (
                   <Link
                     key={entry.categoryId}
                     href={`/category/${entry.category.slug}`}
-                    className="rounded-full border border-[#0A4D3C]/20 bg-[#0A4D3C]/6 px-3 py-1 text-xs font-medium text-[#0A4D3C] transition-colors hover:bg-[#0A4D3C]/12"
+                    className="rounded-full border border-[#0A4D3C]/20 bg-[#0A4D3C]/6 px-2.5 py-0.5 text-[10px] font-medium text-[#0A4D3C] transition-colors hover:bg-[#0A4D3C]/12 md:px-3 md:py-1 md:text-xs"
                   >
                     {entry.category.name}
                   </Link>
@@ -158,38 +158,38 @@ export default async function ProductDetailPage({
               </div>
 
               {/* Title */}
-              <h1 className="text-2xl font-bold leading-snug text-slate-900 md:text-3xl">
+              <h1 className="text-xl font-bold leading-snug text-slate-900 md:text-2xl lg:text-3xl">
                 {product.title}
               </h1>
               {product.shortDescription && (
-                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500 md:mt-2 md:text-sm">
                   {product.shortDescription}
                 </p>
               )}
 
               {/* Rating row */}
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-3 flex items-center gap-2 md:mt-4 md:gap-3">
                 <StarRow rating={avgRating} />
-                <span className="text-sm font-semibold text-slate-700">{avgRating.toFixed(1)}</span>
+                <span className="text-xs font-semibold text-slate-700 md:text-sm">{avgRating.toFixed(1)}</span>
                 <a
                   href="#reviews"
-                  className="text-sm text-slate-400 underline-offset-2 hover:text-[#0A4D3C] hover:underline"
+                  className="text-xs text-slate-400 underline-offset-2 hover:text-[#0A4D3C] hover:underline md:text-sm"
                 >
                   {ratingCount} {ratingCount === 1 ? "review" : "reviews"}
                 </a>
               </div>
 
               {/* Price block */}
-              <div className="mt-5 flex flex-wrap items-end gap-3">
-                <p className="text-4xl font-bold text-[#0A4D3C]">
+              <div className="mt-4 flex flex-wrap items-end gap-2 md:mt-5 md:gap-3">
+                <p className="text-3xl font-bold text-[#0A4D3C] md:text-4xl">
                   ₹{price.toLocaleString("en-IN")}
                 </p>
                 {discountPct > 0 && (
                   <>
-                    <p className="mb-1 text-lg text-slate-400 line-through">
+                    <p className="mb-0.5 text-base text-slate-400 line-through md:mb-1 md:text-lg">
                       ₹{regularPrice.toLocaleString("en-IN")}
                     </p>
-                    <span className="mb-1 rounded-full bg-green-100 px-2.5 py-0.5 text-sm font-semibold text-green-700">
+                    <span className="mb-0.5 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 md:mb-1 md:px-2.5 md:text-sm">
                       {discountPct}% OFF
                     </span>
                   </>
@@ -201,12 +201,12 @@ export default async function ProductDetailPage({
                 </p>
               )}
 
-              <div className="my-5 border-t border-[#0A4D3C]/8" />
+              <div className="my-4 border-t border-[#0A4D3C]/8 md:my-5" />
 
               {/* Variant selector */}
               {product.variantType && product.variants.length > 0 && (
-                <div className="mb-5">
-                  <p className="mb-2.5 text-sm font-semibold text-slate-700">
+                <div className="mb-4 md:mb-5">
+                  <p className="mb-2 text-xs font-semibold text-slate-700 md:text-sm">
                     Select{" "}
                     {product.variantType.charAt(0) +
                       product.variantType.slice(1).toLowerCase()}
@@ -217,7 +217,7 @@ export default async function ProductDetailPage({
                       </span>
                     )}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2">
                     {product.variants.map((variant) => {
                       const vPrice = Number(
                         variant.salePrice ?? variant.regularPrice,
@@ -227,7 +227,7 @@ export default async function ProductDetailPage({
                         <Link
                           key={variant.id}
                           href={`/product/${product.slug}?variant=${variant.id}`}
-                          className={`rounded-xl border px-4 py-2 text-sm font-medium transition-all duration-150 ${
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-150 md:rounded-xl md:px-4 md:py-2 md:text-sm ${
                             isActive
                               ? "border-[#0A4D3C] bg-[#0A4D3C] text-white shadow-sm"
                               : "border-[#0A4D3C]/20 bg-white text-slate-700 hover:border-[#0A4D3C]/50 hover:bg-[#0A4D3C]/4"
@@ -235,7 +235,7 @@ export default async function ProductDetailPage({
                         >
                           {variant.value}
                           {vPrice !== price && !isActive && (
-                            <span className="ml-1.5 text-xs opacity-70">
+                            <span className="ml-1 text-[10px] opacity-70 md:ml-1.5 md:text-xs">
                               ₹{vPrice.toLocaleString("en-IN")}
                             </span>
                           )}
@@ -247,24 +247,24 @@ export default async function ProductDetailPage({
               )}
 
               {/* Qty + CTAs */}
-              <form action={addToCartAction} className="space-y-4">
+              <form action={addToCartAction} className="space-y-3 md:space-y-4">
                 <input type="hidden" name="productId" value={product.id} />
                 {selectedVariant && (
                   <input type="hidden" name="variantId" value={selectedVariant.id} />
                 )}
 
                 <div>
-                  <p className="mb-2 text-sm font-semibold text-slate-700">Quantity</p>
+                  <p className="mb-1.5 text-xs font-semibold text-slate-700 md:mb-2 md:text-sm">Quantity</p>
                   <QuantityStepper max={Math.max(stockQty, 1)} />
                 </div>
 
-                <div className="flex flex-col gap-3 pt-1">
+                <div className="flex flex-col gap-2 pt-1 md:gap-3">
                   <Button
                     type="submit"
-                    className="h-12 w-full rounded-xl text-sm font-semibold"
+                    className="h-11 w-full rounded-xl text-sm font-semibold md:h-12"
                     disabled={stockQty <= 0}
                   >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    <ShoppingCart className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                     {stockQty > 0 ? "Add to Cart" : "Out of Stock"}
                   </Button>
                   {stockQty > 0 && (
@@ -272,7 +272,7 @@ export default async function ProductDetailPage({
                       type="submit"
                       formAction={buyNowAction}
                       variant="secondary"
-                      className="h-12 w-full rounded-xl text-sm font-semibold"
+                      className="h-11 w-full rounded-xl text-sm font-semibold md:h-12"
                     >
                       Buy Now
                     </Button>
@@ -281,21 +281,21 @@ export default async function ProductDetailPage({
               </form>
 
               {/* Quick meta */}
-              <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-[#0A4D3C]/8 pt-5 text-[13px]">
+              <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-[#0A4D3C]/8 pt-4 text-xs md:mt-5 md:gap-x-4 md:gap-y-2.5 md:pt-5 md:text-[13px]">
                 {sku && (
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Package className="h-4 w-4 flex-shrink-0 text-[#0A4D3C]/60" />
+                  <div className="flex items-center gap-1.5 text-slate-500 md:gap-2">
+                    <Package className="h-3.5 w-3.5 shrink-0 text-[#0A4D3C]/60 md:h-4 md:w-4" />
                     <span>
                       SKU:{" "}
                       <span className="font-medium text-slate-700">{sku}</span>
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
                   {stockQty > 0 ? (
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-500" />
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500 md:h-4 md:w-4" />
                   ) : (
-                    <XCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
+                    <XCircle className="h-3.5 w-3.5 shrink-0 text-red-400 md:h-4 md:w-4" />
                   )}
                   <span
                     className={
@@ -309,8 +309,8 @@ export default async function ProductDetailPage({
                 </div>
                 {(Number(product.dimensionLengthCm) > 0 ||
                   Number(product.dimensionWidthCm) > 0) && (
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Ruler className="h-4 w-4 flex-shrink-0 text-[#0A4D3C]/60" />
+                  <div className="flex items-center gap-1.5 text-slate-500 md:gap-2">
+                    <Ruler className="h-3.5 w-3.5 shrink-0 text-[#0A4D3C]/60 md:h-4 md:w-4" />
                     <span>
                       {Number(product.dimensionLengthCm)} ×{" "}
                       {Number(product.dimensionWidthCm)} ×{" "}
@@ -319,8 +319,8 @@ export default async function ProductDetailPage({
                   </div>
                 )}
                 {weight > 0 && (
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Scale className="h-4 w-4 flex-shrink-0 text-[#0A4D3C]/60" />
+                  <div className="flex items-center gap-1.5 text-slate-500 md:gap-2">
+                    <Scale className="h-3.5 w-3.5 shrink-0 text-[#0A4D3C]/60 md:h-4 md:w-4" />
                     <span>{weight} kg</span>
                   </div>
                 )}
@@ -328,26 +328,26 @@ export default async function ProductDetailPage({
             </div>
 
             {/* Trust strip */}
-            <div className="lux-card rounded-2xl p-4">
+            <div className="lux-card rounded-xl p-3 md:rounded-2xl md:p-4">
               <div className="grid grid-cols-3 divide-x divide-[#0A4D3C]/10">
-                <div className="flex flex-col items-center gap-1.5 px-2 text-center">
-                  <Truck className="h-5 w-5 text-[#0A4D3C]" />
-                  <span className="text-xs font-semibold text-slate-700">Free Delivery</span>
-                  <span className="text-[10px] leading-tight text-slate-400">
+                <div className="flex flex-col items-center gap-1 px-1 text-center md:gap-1.5 md:px-2">
+                  <Truck className="h-4 w-4 text-[#0A4D3C] md:h-5 md:w-5" />
+                  <span className="text-[10px] font-semibold text-slate-700 md:text-xs">Free Delivery</span>
+                  <span className="hidden text-[10px] leading-tight text-slate-400 sm:block">
                     on orders ₹999+
                   </span>
                 </div>
-                <div className="flex flex-col items-center gap-1.5 px-2 text-center">
-                  <RefreshCw className="h-5 w-5 text-[#0A4D3C]" />
-                  <span className="text-xs font-semibold text-slate-700">Easy Returns</span>
-                  <span className="text-[10px] leading-tight text-slate-400">
+                <div className="flex flex-col items-center gap-1 px-1 text-center md:gap-1.5 md:px-2">
+                  <RefreshCw className="h-4 w-4 text-[#0A4D3C] md:h-5 md:w-5" />
+                  <span className="text-[10px] font-semibold text-slate-700 md:text-xs">Easy Returns</span>
+                  <span className="hidden text-[10px] leading-tight text-slate-400 sm:block">
                     7-day policy
                   </span>
                 </div>
-                <div className="flex flex-col items-center gap-1.5 px-2 text-center">
-                  <ShieldCheck className="h-5 w-5 text-[#0A4D3C]" />
-                  <span className="text-xs font-semibold text-slate-700">100% Authentic</span>
-                  <span className="text-[10px] leading-tight text-slate-400">
+                <div className="flex flex-col items-center gap-1 px-1 text-center md:gap-1.5 md:px-2">
+                  <ShieldCheck className="h-4 w-4 text-[#0A4D3C] md:h-5 md:w-5" />
+                  <span className="text-[10px] font-semibold text-slate-700 md:text-xs">100% Authentic</span>
+                  <span className="hidden text-[10px] leading-tight text-slate-400 sm:block">
                     certified products
                   </span>
                 </div>
@@ -357,17 +357,17 @@ export default async function ProductDetailPage({
         </div>
 
         {/* ─── Sticky section nav ─── */}
-        <div className="sticky top-[58px] z-20 -mx-4 mt-10 border-b border-[#0A4D3C]/8 bg-white/95 px-4 backdrop-blur md:-mx-8 md:px-8">
-          <nav className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <div className="sticky top-[52px] z-20 -mx-3 mt-6 border-b border-[#0A4D3C]/8 bg-white/95 px-3 backdrop-blur md:-mx-8 md:mt-10 md:px-8 md:top-[58px]">
+          <nav className="flex gap-0 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
             {[
               { label: "Description", href: "#description" },
-              { label: "Specifications", href: "#specifications" },
+              { label: "Specs", href: "#specifications" },
               { label: `Reviews (${ratingCount})`, href: "#reviews" },
             ].map(({ label, href }) => (
               <a
                 key={href}
                 href={href}
-                className="flex-shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-500 transition-colors hover:border-[#0A4D3C] hover:text-[#0A4D3C]"
+                className="shrink-0 border-b-2 border-transparent px-3 py-2.5 text-xs font-medium text-slate-500 transition-colors hover:border-[#0A4D3C] hover:text-[#0A4D3C] md:px-4 md:py-3 md:text-sm"
               >
                 {label}
               </a>
@@ -376,8 +376,8 @@ export default async function ProductDetailPage({
         </div>
 
         {/* ─── Description ─── */}
-        <section id="description" className="scroll-mt-28 pt-10">
-          <div className="lux-card rounded-2xl p-6 md:p-8">
+        <section id="description" className="scroll-mt-24 pt-6 md:scroll-mt-28 md:pt-10">
+          <div className="lux-card rounded-xl p-4 md:rounded-2xl md:p-6 lg:p-8">
             <h2 className="text-xl font-bold text-[#0A4D3C]">Product Description</h2>
             <div className="mt-4 whitespace-pre-wrap leading-7 text-slate-700">
               {product.description}
@@ -403,8 +403,8 @@ export default async function ProductDetailPage({
           tags.length > 0 ||
           Number(product.dimensionLengthCm) > 0 ||
           weight > 0) && (
-          <section id="specifications" className="scroll-mt-28 pt-8">
-            <div className="lux-card rounded-2xl p-6 md:p-8">
+          <section id="specifications" className="scroll-mt-24 pt-5 md:scroll-mt-28 md:pt-8">
+            <div className="lux-card rounded-xl p-4 md:rounded-2xl md:p-6 lg:p-8">
               <h2 className="text-xl font-bold text-[#0A4D3C]">Specifications</h2>
               <dl className="mt-5 grid gap-0 divide-y divide-[#0A4D3C]/6">
                 {Number(product.dimensionLengthCm) > 0 && (
@@ -459,8 +459,8 @@ export default async function ProductDetailPage({
         )}
 
         {/* ─── Reviews ─── */}
-        <section id="reviews" className="scroll-mt-28 pt-8">
-          <div className="lux-card rounded-2xl p-6 md:p-8">
+        <section id="reviews" className="scroll-mt-24 pt-5 md:scroll-mt-28 md:pt-8">
+          <div className="lux-card rounded-xl p-4 md:rounded-2xl md:p-6 lg:p-8">
             <h2 className="text-xl font-bold text-[#0A4D3C]">Customer Reviews</h2>
 
             {/* Summary + distribution */}
@@ -561,7 +561,7 @@ export default async function ProductDetailPage({
                 </Link>
               )}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
               {relatedProducts.map((item) => (
                 <ProductCard
                   key={item.id}
